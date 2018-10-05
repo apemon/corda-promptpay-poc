@@ -1,8 +1,11 @@
 package com.poc.api
 
+import com.poc.flow.ProxyNameIssueFlow
+import com.poc.state.ProxyNameState
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.StateAndRef
+import net.corda.core.crypto.SecureHash
 import net.corda.core.internal.x500Name
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
@@ -25,8 +28,8 @@ import javax.ws.rs.core.Response
 @Path("pp")
 class PPAPI (val rpcOps: CordaRPCOps) {
 
-    private val me = rpcOps.nodeInfo().legalIdentities.first().name;
-    private val myLegalName = me.x500Name;
+    private val me = rpcOps.nodeInfo().legalIdentities.first()
+    private val myLegalName = me.name.x500Name;
 
     fun X500Name.toDisplayString() : String  = BCStyle.INSTANCE.toString(this)
 
@@ -94,9 +97,43 @@ class PPAPI (val rpcOps: CordaRPCOps) {
         }
     }
 
+    @POST
+    @Path("names/issue")
+    fun issueProxyName(request: IssueRequest): Response {
+        try{
+            val identifier = SecureHash.sha256(request.namespace + ":" + request.identifier).toString()
+            val hash = SecureHash.sha256(request.account + ":" + request.accountName).toString()
+            val state = ProxyNameState(identifier, me, hash)
+            val result = rpcOps.startFlow(::ProxyNameIssueFlow, state).returnValue.get()
+            return Response
+                    .status(Response.Status.OK)
+                    .entity(result.tx.outputs.single().data.toString())
+                    .build()
+        } catch (e: Exception){
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(e.printStackTrace())
+                    .build()
+        }
+    }
+
+    @GET
+    @Path("names")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getNames(): List<StateAndRef<ContractState>> {
+        return rpcOps.vaultQueryBy<ProxyNameState>().states
+    }
+
     data class RequestParam(
             val to: String,
             val amount: Int,
             val currency: String
+    )
+
+    data class IssueRequest(
+            val namespace: String,
+            val identifier: String,
+            val account: String,
+            val accountName: String
     )
 }

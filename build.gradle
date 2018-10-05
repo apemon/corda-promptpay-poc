@@ -104,6 +104,54 @@ def rpcUsersList = [
          'permissions' : ["ALL"]]
 ]
 
+task prepareDockerNodes(type: net.corda.plugins.Dockerform, dependsOn: ['jar']) {
+    directory "./build/docker"
+    node {
+        name "O=Notary,L=Bangkok,C=TH"
+        notary = [validating : true]
+        cordapps = [
+                "$project.group:cordapp:$project.version",
+                "$corda_release_group:corda-finance:$corda_release_version"
+        ]
+    }
+    node {
+        name "O=CentralBank,L=Bangkok,C=TH"
+        rpcSettings {
+            useSsl false
+            standAloneBroker false
+        }
+        cordapps = [
+                "$project.group:cordapp:$project.version",
+                "$corda_release_group:corda-finance:$corda_release_version"
+        ]
+        rpcUsers = rpcUsersList
+    }
+    node {
+        name "O=BankA,L=Bangkok,C=TH"
+        rpcSettings {
+            useSsl false
+            standAloneBroker false
+        }
+        cordapps = [
+                "$project.group:cordapp:$project.version",
+                "$corda_release_group:corda-finance:$corda_release_version"
+        ]
+        rpcUsers = rpcUsersList
+    }
+    node {
+        name "O=BankB,L=Bangkok,C=TH"
+        rpcSettings {
+            useSsl false
+            standAloneBroker false
+        }
+        cordapps = [
+                "$project.group:cordapp:$project.version",
+                "$corda_release_group:corda-finance:$corda_release_version"
+        ]
+        rpcUsers = rpcUsersList
+    }
+}
+
 task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
     directory "./build/nodes"
     node {

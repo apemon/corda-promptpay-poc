@@ -1,6 +1,7 @@
 package com.poc.api
 
 import com.poc.flow.ProxyNameIssueFlow
+import com.poc.schema.PublicProxyNameSchemaV1
 import com.poc.state.ProxyNameState
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.ContractState
@@ -10,6 +11,9 @@ import net.corda.core.internal.x500Name
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startFlow
 import net.corda.core.messaging.vaultQueryBy
+import net.corda.core.node.services.Vault
+import net.corda.core.node.services.vault.QueryCriteria
+import net.corda.core.node.services.vault.builder
 import net.corda.core.utilities.OpaqueBytes
 import net.corda.finance.contracts.asset.Cash
 import net.corda.finance.contracts.getCashBalances
@@ -18,10 +22,7 @@ import net.corda.finance.flows.CashPaymentFlow
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.style.BCStyle
 import java.util.*
-import javax.ws.rs.GET
-import javax.ws.rs.POST
-import javax.ws.rs.Path
-import javax.ws.rs.Produces
+import javax.ws.rs.*
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 
@@ -122,6 +123,20 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     @Produces(MediaType.APPLICATION_JSON)
     fun getNames(): List<StateAndRef<ContractState>> {
         return rpcOps.vaultQueryBy<ProxyNameState>().states
+    }
+
+    @GET
+    @Path("name/{identifier}")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getName(@PathParam(value = "identifier") identifier: String): Response {
+        val generalCriteria = QueryCriteria.VaultQueryCriteria(Vault.StateStatus.UNCONSUMED)
+        val results = builder {
+            val identifierType = PublicProxyNameSchemaV1.PersistentProxyName::identifier.equal(identifier)
+            val customIdentifierCriteria = QueryCriteria.VaultCustomQueryCriteria(identifierType)
+            val criteria = generalCriteria.and(customIdentifierCriteria)
+            val results = rpcOps.vaultQueryBy<ProxyNameState>(criteria).states
+            return Response.ok(results).build()
+        }
     }
 
     data class RequestParam(

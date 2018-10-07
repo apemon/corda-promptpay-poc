@@ -1,6 +1,9 @@
 package com.poc.api
 
+import com.poc.flow.ProxyNameAddFlow
 import com.poc.flow.ProxyNameIssueFlow
+import com.poc.flow.ProxyNameQueryFlow
+import com.poc.model.ProxyName
 import com.poc.schema.PublicProxyNameSchemaV1
 import com.poc.state.ProxyNameState
 import net.corda.core.contracts.Amount
@@ -102,8 +105,10 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     @Path("names/issue")
     fun issueProxyName(request: IssueRequest): Response {
         try{
-            val identifier = SecureHash.sha256(request.namespace + ":" + request.identifier).toString()
+            val identifier = SecureHash.sha256(request.namespace + ":" + request.value).toString()
             val hash = SecureHash.sha256(request.account + ":" + request.accountName).toString()
+            val proxy = ProxyName(identifier, hash, request.namespace, request.value, request.accountName, request.account)
+            rpcOps.startFlow(::ProxyNameAddFlow, proxy)
             val state = ProxyNameState(identifier, me, hash)
             val result = rpcOps.startFlow(::ProxyNameIssueFlow, state).returnValue.get()
             return Response
@@ -139,6 +144,14 @@ class PPAPI (val rpcOps: CordaRPCOps) {
         }
     }
 
+    @GET
+    @Path("proxy/{identifier}")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getProxyName(@PathParam(value = "identifier") identifier: String): Response {
+        val proxy = rpcOps.startFlow(::ProxyNameQueryFlow, identifier).returnValue.get()
+        return Response.ok(proxy).build()
+    }
+
     data class RequestParam(
             val to: String,
             val amount: Int,
@@ -147,7 +160,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
 
     data class IssueRequest(
             val namespace: String,
-            val identifier: String,
+            val value: String,
             val account: String,
             val accountName: String
     )

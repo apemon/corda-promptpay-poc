@@ -37,7 +37,7 @@ class ProxyNameDatabaseService(services: ServiceHub): DatabaseService(services) 
             val acctName = it.getString(4)
             val acctNo = it.getString(5)
             val hash = it.getString(6)
-            val proxy = ProxyName(iden,proxyName,proxyValue, acctName, acctNo, hash)
+            val proxy = ProxyName(identifier = iden, namespace = proxyName, value = proxyValue, acctNo = acctNo, acctName = acctName, hash = hash)
             proxy
         })
 

@@ -8,6 +8,4 @@ data class ProxyName (val identifier: String,
                       val namespace: String,
                       val value: String,
                       val acctName: String,
-                      val acctNo: String) {
-
-}
+                      val acctNo: String)

@@ -1,10 +1,9 @@
 package com.poc.api
 
-import com.poc.flow.ProxyNameAddFlow
-import com.poc.flow.ProxyNameIssueFlow
-import com.poc.flow.ProxyNameQueryFlow
+import com.poc.flow.*
 import com.poc.model.ProxyName
 import com.poc.schema.PublicProxyNameSchemaV1
+import com.poc.state.AccountTransferState
 import com.poc.state.ProxyNameState
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.ContractState
@@ -148,8 +147,46 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     @Path("proxy/{identifier}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getProxyName(@PathParam(value = "identifier") identifier: String): Response {
-        val proxy = rpcOps.startFlow(::ProxyNameQueryFlow, identifier).returnValue.get()
+        val proxy = rpcOps.startFlow(::ProxyNameQueryUtil, identifier).returnValue.get()
         return Response.ok(proxy).build()
+    }
+
+    @GET
+    @Path("accttrans")
+    @Produces(MediaType.APPLICATION_JSON)
+    fun getAccountTransfer(): List<StateAndRef<ContractState>> {
+        // Filter by state type: Cash.
+        return rpcOps.vaultQueryBy<AccountTransferState>().states
+    }
+
+    @POST
+    @Path("acct/propose")
+    fun accountTransfer(request: AccountTransferRequest): Response {
+        val transferAmount = Amount(request.amount.toLong() * 100, Currency.getInstance(request.currency))
+
+        val targetParty = rpcOps.partiesFromName(request.creditor, true).first()
+        val state = AccountTransferState(
+                debtor = me,
+                debtorAcct = request.debtorAcct,
+                creditor = targetParty,
+                identifier = request.identifier,
+                amount = transferAmount,
+                creditorAcct = "",
+                creditorName = "",
+                status = ""
+        )
+        try {
+            val trx = rpcOps.startFlow(::AccountTransferProposeFlow, state).returnValue.get()
+            return Response
+                    .status(Response.Status.OK)
+                    .entity((trx.tx.outputs.single().data as AccountTransferState).toString())
+                    .build()
+        } catch(e: Exception){
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(e.printStackTrace())
+                    .build()
+        }
     }
 
     data class RequestParam(
@@ -163,5 +200,15 @@ class PPAPI (val rpcOps: CordaRPCOps) {
             val value: String,
             val account: String,
             val accountName: String
+    )
+
+    data class AccountTransferRequest(
+            val debtor: String,
+            val debtorAcct: String,
+            val creditor: String,
+            val creditorAcct: String,
+            val amount: Int,
+            val currency: String,
+            val identifier: String
     )
 }

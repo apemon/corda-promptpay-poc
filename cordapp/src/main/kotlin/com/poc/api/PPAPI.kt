@@ -8,6 +8,7 @@ import com.poc.state.ProxyNameState
 import net.corda.core.contracts.Amount
 import net.corda.core.contracts.ContractState
 import net.corda.core.contracts.StateAndRef
+import net.corda.core.contracts.UniqueIdentifier
 import net.corda.core.crypto.SecureHash
 import net.corda.core.internal.x500Name
 import net.corda.core.messaging.CordaRPCOps
@@ -177,6 +178,24 @@ class PPAPI (val rpcOps: CordaRPCOps) {
         )
         try {
             val trx = rpcOps.startFlow(::AccountTransferProposeFlow, state).returnValue.get()
+            return Response
+                    .status(Response.Status.OK)
+                    .entity((trx.tx.outputs.single().data as AccountTransferState).toString())
+                    .build()
+        } catch(e: Exception){
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(e.printStackTrace())
+                    .build()
+        }
+    }
+
+    @GET
+    @Path("acct/confirm/{linearid}")
+    fun accountConfirm(@PathParam(value = "linearid") linearId: String): Response {
+        val id = UniqueIdentifier.fromString(linearId)
+        try {
+            val trx = rpcOps.startFlow(::AccountTransferConfirmFlow, id).returnValue.get()
             return Response
                     .status(Response.Status.OK)
                     .entity((trx.tx.outputs.single().data as AccountTransferState).toString())

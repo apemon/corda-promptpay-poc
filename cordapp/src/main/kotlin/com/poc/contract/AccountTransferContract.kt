@@ -14,7 +14,7 @@ class AccountTransferContract: Contract {
 
     interface Commands: CommandData {
         class Propose: TypeOnlyCommandData(), Commands
-        class Transfer: TypeOnlyCommandData(), Commands
+        class Confirm: TypeOnlyCommandData(), Commands
     }
 
     class OracleCommand(val identifier: String, val proxy: ProxyName): CommandData
@@ -23,9 +23,13 @@ class AccountTransferContract: Contract {
         val command = tx.commands.requireSingleCommand<AccountTransferContract.Commands>()
         when(command.value) {
             is Commands.Propose -> requireThat {
-
+                val propose = tx.groupStates<AccountTransferState, UniqueIdentifier> { it.linearId }.single()
+                "No inputs should be consumed when transfer" using (propose.inputs.isEmpty())
+                "Only one output state should be created" using (propose.outputs.size == 1)
+                val output = propose.outputs.single()
+                "Only participants must sign transaction" using (command.signers.toSet() == listOf(output.debtor.owningKey).toSet())
             }
-            is Commands.Transfer -> requireThat {
+            is Commands.Confirm -> requireThat {
 
             }
         }

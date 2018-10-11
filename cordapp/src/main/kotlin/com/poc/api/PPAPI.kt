@@ -198,7 +198,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
             val trx = rpcOps.startFlow(::AccountTransferConfirmFlow, id).returnValue.get()
             return Response
                     .status(Response.Status.OK)
-                    .entity((trx.tx.outputs.single().data as AccountTransferState).toString())
+                    .entity(trx.tx.outputsOfType<AccountTransferState>().single().toString())
                     .build()
         } catch(e: Exception){
             return Response

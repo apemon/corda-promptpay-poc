@@ -40,13 +40,14 @@ class AccountTransferConfirmFlow(val linearId: UniqueIdentifier): FlowLogic<Sign
         // create transacion builder
         val builder = TransactionBuilder(notary)
         // get some cash from vault and add a spend to transaction builder
-        val (_, cashKeys) = Cash.generateSpend(serviceHub, builder, amount, ourIdentityAndCert, input.state.data.creditor)
-        // build command
-        val command = Command(AccountTransferContract.Commands.Confirm(), input.state.data.participants.map { it.owningKey })
+        val (_, cashKeys) = Cash.generateSpend(serviceHub, builder, amount, ourIdentityAndCert, creditor)
         // create output state
-        val output = input.state.data.copy(status = "CONFIRM")
+        val output = input.state.data.copy(status = "CONFIRM", participants = listOf(ourIdentity, creditor))
+        // build command
+        val command = Command(AccountTransferContract.Commands.Confirm(), output.participants.map { it.owningKey })
         // add state and command to builder
         builder.addCommand(command)
+        builder.addInputState(input)
         builder.addOutputState(output, AccountTransferContract.ACCOUNT_TRANSFER_CONTRACT_ID)
         // verify and sign
         builder.verify(serviceHub)

@@ -15,8 +15,7 @@ data class AccountTransferState(val debtor: Party,
                                 val amount: Amount<Currency>,
                                 val identifier: String,
                                 val status: String,
+                                override val participants: List<AbstractParty> = listOf(debtor),
                                 override val linearId: UniqueIdentifier = UniqueIdentifier()): LinearState {
 
-    override val participants: List<AbstractParty>
-        get() = listOf(debtor, creditor)
 }

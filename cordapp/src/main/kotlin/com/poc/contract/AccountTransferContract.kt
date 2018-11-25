@@ -38,13 +38,13 @@ class AccountTransferContract: Contract {
                 val cash = tx.outputsOfType<Cash.State>()
                 "There must be output cash" using (cash.isNotEmpty())
                 val input = confirm.inputs.single()
-                val output = confirm.outputs.single() as AccountTransferState
+                val output = confirm.outputs.single()
                 "Debtor and Creditor must not be the same party" using (output.debtor != output.creditor)
                 val acceptableCash = cash.filter { it.owner == input.creditor }
                 "There must be output cash paid to the recipient." using (acceptableCash.isNotEmpty())
                 val sumAcceptableCash = acceptableCash.sumCash().withoutIssuer()
                 "Must have enough cash" using (sumAcceptableCash == output.amount)
-                "Input Status must PURPOSE" using (input.status == "PURPOSE")
+                "Input Status must PURPOSE" using (input.status == "PROPOSE")
                 "Output Status must CONFIRM" using (output.status == "CONFIRM")
                 "Only participants must sign transaction" using (command.signers.toSet() == output.participants.map { it.owningKey }.toSet())
             }

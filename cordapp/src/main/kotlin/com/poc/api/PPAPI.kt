@@ -43,13 +43,13 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     fun whoamo() = mapOf("me" to myLegalName.toDisplayString());
 
     @GET
-    @Path("balance")
+    @Path("asset/balance")
     @Produces(MediaType.APPLICATION_JSON)
             // Display cash balances.
     fun getCashBalances() = rpcOps.getCashBalances()
 
     @GET
-    @Path("cash")
+    @Path("asset/cash")
     @Produces(MediaType.APPLICATION_JSON)
     fun getCash(): List<StateAndRef<ContractState>> {
         // Filter by state type: Cash.
@@ -57,7 +57,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @POST
-    @Path("issue")
+    @Path("asset/issue")
     fun issue(request: RequestParam): Response {
         val issueAmount = Amount(request.amount.toLong() * 100, Currency.getInstance(request.currency))
 
@@ -78,7 +78,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @POST
-    @Path("transfer")
+    @Path("asset/transfer")
     fun transfer(request: RequestParam): Response {
         val transferAmount = Amount(request.amount.toLong() * 100, Currency.getInstance(request.currency))
 
@@ -102,7 +102,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @POST
-    @Path("names/issue")
+    @Path("promptpay/name/issue")
     fun issueProxyName(request: IssueRequest): Response {
         try{
             val identifier = SecureHash.sha256(request.namespace + ":" + request.value).toString()
@@ -124,18 +124,18 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @GET
-    @Path("names")
+    @Path("promptpay/names")
     @Produces(MediaType.APPLICATION_JSON)
     fun getNames(): List<StateAndRef<ContractState>> {
         return rpcOps.vaultQueryBy<ProxyNameState>().states
     }
 
     @GET
-    @Path("name/{identifier}")
+    @Path("promptpay/name/{identifier}")
     @Produces(MediaType.APPLICATION_JSON)
     fun getName(@PathParam(value = "identifier") identifier: String): Response {
         val generalCriteria = QueryCriteria.VaultQueryCriteria(Vault.StateStatus.UNCONSUMED)
-        val results = builder {
+        builder {
             val identifierType = PublicProxyNameSchemaV1.PersistentProxyName::identifier.equal(identifier)
             val customIdentifierCriteria = QueryCriteria.VaultCustomQueryCriteria(identifierType)
             val criteria = generalCriteria.and(customIdentifierCriteria)
@@ -145,7 +145,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @GET
-    @Path("proxy/{identifier}")
+    @Path("promptpay/name/{identifier}/private")
     @Produces(MediaType.APPLICATION_JSON)
     fun getProxyName(@PathParam(value = "identifier") identifier: String): Response {
         val proxy = rpcOps.startFlow(::ProxyNameQueryUtil, identifier).returnValue.get()
@@ -153,7 +153,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @GET
-    @Path("accttrans")
+    @Path("promptpay/transactions")
     @Produces(MediaType.APPLICATION_JSON)
     fun getAccountTransfer(): List<StateAndRef<ContractState>> {
         // Filter by state type: Cash.
@@ -161,7 +161,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @POST
-    @Path("acct/propose")
+    @Path("promptpay/transfer/propose")
     fun accountTransfer(request: AccountTransferRequest): Response {
         val transferAmount = Amount(request.amount.toLong() * 100, Currency.getInstance(request.currency))
 
@@ -191,7 +191,7 @@ class PPAPI (val rpcOps: CordaRPCOps) {
     }
 
     @GET
-    @Path("acct/confirm/{linearid}")
+    @Path("promptpay/transfer/confirm/{linearid}")
     fun accountConfirm(@PathParam(value = "linearid") linearId: String): Response {
         val id = UniqueIdentifier.fromString(linearId)
         try {

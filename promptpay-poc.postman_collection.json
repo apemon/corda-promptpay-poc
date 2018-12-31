@@ -1,0 +1,123 @@
+{
+	"info": {
+		"_postman_id": "3cfa54ea-54bb-4e1c-93dc-90e41f90c074",
+		"name": "promptpay-poc",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Asset - Issue",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": false
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"amount\":2000,\n\t\"currency\": \"THB\",\n\t\"to\": \"\"\n}"
+				},
+				"url": "http://localhost:10007/api/pp/asset/issue"
+			},
+			"response": []
+		},
+		{
+			"name": "Asset - Transfer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": false
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"amount\":1000,\n\t\"currency\": \"THB\",\n\t\"to\": \"BankB\"\n}"
+				},
+				"url": "http://localhost:10007/api/pp/asset/transfer"
+			},
+			"response": []
+		},
+		{
+			"name": "PromptPay - Name Issue",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": false
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"namespace\": \"cid\",\n\t\"value\": \"1234567890123\",\n\t\"account\": \"1234567890\",\n\t\"accountName\": \"PP Joker\"\n}"
+				},
+				"url": "http://localhost:10010/api/pp/promptpay/name/issue"
+			},
+			"response": []
+		},
+		{
+			"name": "PromptPay - View Private Data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": false
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": "http://localhost:10010/api/pp/promptpay/name/EEB9FE05CBE099B89B3983F5C98B2093BBC9945C62F22B2B9A0CE60A2647FA42/private"
+			},
+			"response": []
+		},
+		{
+			"name": "PromptPay - Transaction Propose",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": false
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t        \"debtor\": \"BankB\",\n            \"debtorAcct\" : \"1111111111\",\n            \"creditor\": \"BankA\",\n            \"creditorAcct\": \"\",\n            \"amount\": 500,\n            \"currency\": \"THB\",\n            \"identifier\": \"EEB9FE05CBE099B89B3983F5C98B2093BBC9945C62F22B2B9A0CE60A2647FA42\"\n}"
+				},
+				"url": "http://localhost:10013/api/pp/promptpay/transfer/propose"
+			},
+			"response": []
+		},
+		{
+			"name": "PromptPay - Transaction Confirm",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"disabled": false
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": "http://localhost:10013/api/pp/promptpay/transfer/confirm/6f5f68e6-81fa-4545-b565-f1d6676405bb"
+			},
+			"response": []
+		}
+	]
+}
